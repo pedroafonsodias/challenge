@@ -2,6 +2,8 @@ package com.dws.challenge.web;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
+import com.dws.challenge.exception.InsufficientBalanceException;
+import com.dws.challenge.exception.InvalidAmountException;
 import com.dws.challenge.service.AccountsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/v1/accounts")
@@ -48,4 +51,14 @@ public class AccountsController {
     return this.accountsService.getAccount(accountId);
   }
 
+  @PostMapping(path = "/{originAccountId}/{destinationAccountId}/{amount}")
+  public ResponseEntity<Object> transfer(@PathVariable String originAccountId, @PathVariable String destinationAccountId, @PathVariable BigDecimal amount) {
+    log.info("Transfering {} from account id {} to account id {}", amount, originAccountId, destinationAccountId);
+    try {
+      this.accountsService.transfer(originAccountId, destinationAccountId, amount);
+      return new ResponseEntity<>(HttpStatus.OK);
+    } catch (InvalidAmountException | InsufficientBalanceException e) {
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+  }
 }
